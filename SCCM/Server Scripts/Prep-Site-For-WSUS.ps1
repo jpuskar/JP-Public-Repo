@@ -5,6 +5,8 @@
 #           Metering / Etc. Folders in SCCM 2012, based on
 #           an input file.
 ###########################################################
+# Heavily modified and refactored by John Puskar - johnpuskar@gmail.com
+#
 
 #ERROR REPORTING ALL
 #Set-StrictMode -Version latest
