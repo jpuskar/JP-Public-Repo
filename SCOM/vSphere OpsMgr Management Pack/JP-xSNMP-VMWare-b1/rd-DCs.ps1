@@ -1,0 +1,1 @@
+.\Discover-vCenterDatacenters-b35.ps1 -sourceID "{CF2B647B-2486-FD2C-6C82-009DD11440B5}" -managedEntityID "{5063EA4D-B733-7F02-3A03-C78C41E54D70}" -vCenterName "vcenter.chemistry.ohio-state.edu"

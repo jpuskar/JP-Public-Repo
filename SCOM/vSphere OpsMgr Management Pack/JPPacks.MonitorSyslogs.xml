@@ -1,0 +1,521 @@
+<ManagementPack ContentReadable="true" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <Manifest>
+    <Identity>
+      <ID>JPPacks.MonitorSyslogs</ID>
+      <Version>1.0.0.11</Version>
+    </Identity>
+    <Name>JPPacks.MonitorSyslogs</Name>
+    <References>
+      <Reference Alias="MicrosoftSystemCenterDataWarehouseLibrary">
+        <ID>Microsoft.SystemCenter.DataWarehouse.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="MicrosoftSystemCenterDataWarehouseReportLibrary">
+        <ID>Microsoft.SystemCenter.DataWarehouse.Report.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="SC">
+        <ID>Microsoft.SystemCenter.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="Windows">
+        <ID>Microsoft.Windows.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="ApplicationLog">
+        <ID>System.ApplicationLog.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="Health">
+        <ID>System.Health.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="System">
+        <ID>System.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+    </References>
+  </Manifest>
+  <TypeDefinitions>
+    <EntityTypes>
+      <ClassTypes>
+        <ClassType ID="JPPacks.MonitorSyslogs.SyslogReceiver" Accessibility="Internal" Abstract="false" Base="Windows!Microsoft.Windows.ComputerRole" Hosted="true" Singleton="false" />
+      </ClassTypes>
+    </EntityTypes>
+    <ModuleTypes>
+      <DataSourceModuleType ID="JPPacks.MonitorSyslogs.CustomSyslogDS" Accessibility="Internal" Batching="false">
+        <Configuration>
+          <xsd:element minOccurs="1" name="MinSeverity" type="xsd:integer" />
+        </Configuration>
+        <ModuleImplementation Isolation="Any">
+          <Composite>
+            <MemberModules>
+              <DataSource ID="SyslogDS" TypeID="ApplicationLog!System.ApplicationLog.SysLog.FilteredEventProvider">
+                <Port>514</Port>
+                <Expression>
+                  <SimpleExpression>
+                    <ValueExpression>
+                      <XPathQuery Type="String">Severity</XPathQuery>
+                    </ValueExpression>
+                    <Operator>LessEqual</Operator>
+                    <ValueExpression>
+                      <Value Type="String">$Config/MinSeverity$</Value>
+                    </ValueExpression>
+                  </SimpleExpression>
+                </Expression>
+              </DataSource>
+              <ProbeAction ID="ParseScript" TypeID="Windows!Microsoft.Windows.PowerShellPropertyBagProbe">
+                <ScriptName>Parse-SyslogEvents.ps1</ScriptName>
+                <ScriptBody><![CDATA[
+#Process-Syslogs-Rev1.ps1
+#Write-Host "Running Script"
+#use $args when testing manually, use $Param in opsmgr scripting\deployment
+Param($xmlText)
+#$xmlText = $args[0]
+$xml = [xml]($xmlText)
+
+Function Resolve-IP($IPAddr)
+	{
+		Trap{}
+		$hostname = $IPAddr
+		$hostname = [System.Net.Dns]::GetHostEntry($IPAddr).Hostname
+		Return $hostname
+	}
+
+Function Resolve-Facility($xmlFacility)
+	{
+		$strFacility = $null
+		Switch($xmlFacility)
+			{
+				Default {$strFacility = $null}
+				0 {$strFacility = "Kernel"}
+				1 {$strFacility = "User-Level"}
+				2 {$strFacility = "Mail System"}
+				3 {$strFacility = "System Daemons"}
+				4 {$strFacility = "SecurityAuth4"}
+				5 {$strFacility = "syslogd"}
+				6 {$strFacility = "lps"}
+				7 {$strFacility = "nns"}
+				8 {$strFacility = "UUCP"}
+				9 {$strFacility = "clock9"}
+				10 {$strFacility = "SecurityAuth10"}
+				11 {$strFacility = "FTP"}
+				12 {$strFacility = "NTP"}
+				13 {$strFacility = "LogAudit"}
+				14 {$strFacility = "LogAlert"}
+				15 {$strFacility = "clock15"}
+			}
+		Return $strFacility
+	}
+
+Function Resolve-Severity($xmlSeverity)
+	{
+		$strSeverity = $null
+		Switch($xmlSeverity)
+			{
+				Default {$strFacility = $null}
+				0 {$strSeverity = "Emergency"}
+				1 {$strSeverity = "Alert"}
+				2 {$strSeverity = "Critical"}
+				3 {$strSeverity = "Error"}
+				4 {$strSeverity = "Warning"}
+				5 {$strSeverity = "Notice"}
+				6 {$strSeverity = "Information"}
+				7 {$strSeverity = "Debug"}
+				8 {$strSeverity = "Random"}
+			}
+		Return $strSeverity
+	}
+
+#create pbag
+$api = New-Object -comObject 'MOM.ScriptAPI'
+$bag = $api.CreatePropertyBag()
+
+#Process Facility
+$xmlFacility = $xml.Dataitem.Eventdata.Dataitem.Facility
+If($xmlFacility -is [system.array]){$xmlFacility = $xmlFacility[0]}
+$bag.AddValue("Facility",$xmlFacility)
+$strFacility = Resolve-Facility $xmlFacility
+$bag.AddValue("FacilityName",$strFacility)
+
+#Process Severity and SeverityName
+$xmlSeverity = $xml.Dataitem.Eventdata.Dataitem.Severity
+$bag.AddValue("Severity",$xmlSeverity)
+$strSeverity = Resolve-Severity $xmlSeverity
+$bag.AddValue("SeverityName",$strSeverity)
+
+#Process Priority
+$xmlPriority = $xml.Dataitem.Eventdata.Dataitem.Priority
+$bag.AddValue("Priority",$xmlPriority)
+
+#Process PriorityName
+$xmlPriorityName = $xml.Dataitem.Eventdata.Dataitem.PriorityName
+$bag.AddValue("PriorityName",$xmlPriorityName)
+
+#Process TimeStamp
+$xmlTimeStamp = $xml.Dataitem.Eventdata.Dataitem.TimeStamp
+$bag.AddValue("TimeStamp",$xmlTimeStamp)
+
+#Process Hostname and IPAddr
+$xmlHostname = $xml.dataitem.eventdata.dataitem.HostName
+$strIPRegex = "\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"
+If($xmlHostname -match $strIPRegex)
+	{
+		$bagLoggingComputer = Resolve-IP $xmlHostname
+		$bag.AddValue("HostName",$bagLoggingComputer)
+	}
+$bag.AddValue("IPAddress",$xmlHostname)
+
+#Process Message
+$xmlMessage = $xml.Dataitem.Eventdata.Dataitem.Message
+$bag.AddValue("Message",$xmlMessage)
+
+#Process opsmgr_EventLevel
+#0 = Information
+#1 = Error
+#2 = Warning
+$bagLevel = $null
+$xmlSeverity = $xml.Dataitem.Eventdata.Dataitem.Severity
+If($xmlSeverity -ge 5)
+	{$bagLevel = 0}
+ElseIf($xmlSeverity -eq 4)
+	{$bagLevel = 2}
+Else
+	{$bagLevel = 1}
+$bag.AddValue("opsmgr_EventLevel",$bagLevel)
+
+#process opsmgr_LoggingComputer
+If($bagLoggingComputer -ne $null)
+	{$strLoggingComputer = $bagLoggingComputer}
+Else
+	{
+		$xmlHostname = $xml.dataitem.eventdata.dataitem.HostName
+		$strLoggingComputer = $xmlHostname
+	}
+$bag.AddValue("opsmgr_LoggingComputer",$strLoggingComputer)
+
+#process opsmgr_EventNumber
+$xmlFacility = $xml.Dataitem.Eventdata.Dataitem.Facility
+If($xmlFacility -is [system.array]){$xmlFacility = $xmlFacility[0]}
+$bag.AddValue("opsmgr_EventNumber",$xmlFacility)
+
+#Process opsmgr_Channel
+$strLogName = "Syslog\" + $xmlFacility
+If($strFacility -ne $null)
+	{$strLogName = $strLogName + " - " + $strFacility}
+$bagLogName = $strLogName
+$bag.AddValue("opsmgr_Channel",$bagLogName)
+
+#Process opsmgr_OriginalXMLEvent
+$bagXMLItem = $xml.dataitem.eventdata.innerxml
+$bag.AddValue("opsmgr_OriginalXMLEvent",$bagXMLItem)
+
+#return
+$bag
+  ]]></ScriptBody>
+                <Parameters>
+                  <Parameter>
+                    <Name>xmlText</Name>
+                    <Value>$Data$</Value>
+                  </Parameter>
+                </Parameters>
+                <TimeoutSeconds>30</TimeoutSeconds>
+              </ProbeAction>
+              <ConditionDetection ID="Mapper" TypeID="System!System.Event.GenericDataMapper">
+                <EventOriginId>$Target/Id$</EventOriginId>
+                <PublisherId>$MPElement$</PublisherId>
+                <PublisherName>$MPElement$</PublisherName>
+                <Channel>$Data/Property[@Name="opsmgr_Channel"]$</Channel>
+                <LoggingComputer>$Data/Property[@Name="opsmgr_LoggingComputer"]$</LoggingComputer>
+                <EventNumber>$Data/Property[@Name="opsmgr_EventNumber"]$</EventNumber>
+                <EventCategory>0</EventCategory>
+                <EventLevel>$Data/Property[@Name="opsmgr_EventLevel"]$</EventLevel>
+                <UserName />
+                <Description>$Data/Property[@Name="Message"]$</Description>
+                <Params />
+              </ConditionDetection>
+            </MemberModules>
+            <Composition>
+              <Node ID="Mapper">
+                <Node ID="ParseScript">
+                  <Node ID="SyslogDS" />
+                </Node>
+              </Node>
+            </Composition>
+          </Composite>
+        </ModuleImplementation>
+        <OutputType>System!System.Event.Data</OutputType>
+      </DataSourceModuleType>
+    </ModuleTypes>
+  </TypeDefinitions>
+  <Monitoring>
+    <Discoveries>
+      <Discovery ID="JPPacks.MonitorSyslogs.DiscoverSyslogReceivers" Enabled="true" Target="Windows!Microsoft.Windows.OperatingSystem" ConfirmDelivery="false" Remotable="true" Priority="Normal">
+        <Category>Discovery</Category>
+        <DiscoveryTypes>
+          <DiscoveryClass TypeID="JPPacks.MonitorSyslogs.SyslogReceiver" />
+        </DiscoveryTypes>
+        <DataSource ID="DS" TypeID="Windows!Microsoft.Windows.FilteredRegistryDiscoveryProvider">
+          <ComputerName>$Target/Host/Property[Type="Windows!Microsoft.Windows.Computer"]/NetworkName$</ComputerName>
+          <RegistryAttributeDefinitions>
+            <RegistryAttributeDefinition>
+              <AttributeName>SyslogEnabled</AttributeName>
+              <Path>SOFTWARE\JPPacks\SyslogEnabled</Path>
+              <PathType>1</PathType>
+              <AttributeType>2</AttributeType>
+            </RegistryAttributeDefinition>
+          </RegistryAttributeDefinitions>
+          <Frequency>86400</Frequency>
+          <ClassId>$MPElement[Name="JPPacks.MonitorSyslogs.SyslogReceiver"]$</ClassId>
+          <InstanceSettings>
+            <Settings>
+              <Setting>
+                <Name>$MPElement[Name="Windows!Microsoft.Windows.Computer"]/PrincipalName$</Name>
+                <Value>$Target/Host/Property[Type="Windows!Microsoft.Windows.Computer"]/PrincipalName$</Value>
+              </Setting>
+              <Setting>
+                <Name>$MPElement[Name="System!System.Entity"]/DisplayName$</Name>
+                <Value>$Target/Host/Property[Type="Windows!Microsoft.Windows.Computer"]/PrincipalName$</Value>
+              </Setting>
+            </Settings>
+          </InstanceSettings>
+          <Expression>
+            <SimpleExpression>
+              <ValueExpression>
+                <XPathQuery Type="Integer">Values/SyslogEnabled</XPathQuery>
+              </ValueExpression>
+              <Operator>Equal</Operator>
+              <ValueExpression>
+                <Value Type="Integer">1</Value>
+              </ValueExpression>
+            </SimpleExpression>
+          </Expression>
+        </DataSource>
+      </Discovery>
+    </Discoveries>
+    <Rules>
+      <Rule ID="JPPacks.MonitorSyslogs.CollectSyslogs" Enabled="true" Target="JPPacks.MonitorSyslogs.SyslogReceiver" ConfirmDelivery="false" Remotable="true" Priority="Normal" DiscardLevel="100">
+        <Category>EventCollection</Category>
+        <DataSources>
+          <DataSource ID="CustomSyslogDS" TypeID="JPPacks.MonitorSyslogs.CustomSyslogDS">
+            <MinSeverity>4</MinSeverity>
+          </DataSource>
+        </DataSources>
+        <WriteActions>
+          <WriteAction ID="Collect" TypeID="SC!Microsoft.SystemCenter.CollectEvent" />
+          <WriteAction ID="Publish" TypeID="MicrosoftSystemCenterDataWarehouseLibrary!Microsoft.SystemCenter.DataWarehouse.PublishEventData" />
+        </WriteActions>
+      </Rule>
+    </Rules>
+    <Monitors>
+      <UnitMonitor ID="JPPacks.MonitorSyslogs.Monitors.AvailabilityState.HealthService" Accessibility="Internal" Enabled="true" Target="JPPacks.MonitorSyslogs.SyslogReceiver" ParentMonitorID="Health!System.Health.AvailabilityState" Remotable="true" Priority="Normal" TypeID="Windows!Microsoft.Windows.CheckNTServiceStateMonitorType" ConfirmDelivery="false">
+        <Category>AvailabilityHealth</Category>
+        <OperationalStates>
+          <OperationalState ID="Running" MonitorTypeStateID="Running" HealthState="Success" />
+          <OperationalState ID="NotRunning" MonitorTypeStateID="NotRunning" HealthState="Warning" />
+        </OperationalStates>
+        <Configuration>
+          <ComputerName />
+          <ServiceName>healthservice</ServiceName>
+          <CheckStartupType />
+        </Configuration>
+      </UnitMonitor>
+    </Monitors>
+  </Monitoring>
+  <Presentation>
+    <Views>
+      <View ID="JPPacks.MonitorSyslogs.Views.SyslogEvents" Accessibility="Internal" Enabled="true" Target="JPPacks.MonitorSyslogs.SyslogReceiver" TypeID="SC!Microsoft.SystemCenter.EventViewType" Visible="true">
+        <Category>Custom</Category>
+        <Criteria>
+          <RuleList>
+            <Rule>$MPElement[Name="JPPacks.MonitorSyslogs.CollectSyslogs"]$</Rule>
+          </RuleList>
+        </Criteria>
+        <Presentation>
+          <ColumnInfo Index="0" SortIndex="-1" Width="100" Grouped="false" Sorted="false" IsSortable="true" Visible="true" SortOrder="Ascending">
+            <Name>Level</Name>
+            <Id>LevelId</Id>
+          </ColumnInfo>
+          <ColumnInfo Index="1" SortIndex="0" Width="100" Grouped="false" Sorted="true" IsSortable="true" Visible="true" SortOrder="Descending">
+            <Name>Date and Time</Name>
+            <Id>TimeGenerated</Id>
+          </ColumnInfo>
+          <ColumnInfo Index="2" SortIndex="-1" Width="100" Grouped="false" Sorted="false" IsSortable="true" Visible="true" SortOrder="Ascending">
+            <Name>Source</Name>
+            <Id>PublisherName</Id>
+          </ColumnInfo>
+          <ColumnInfo Index="3" SortIndex="-1" Width="100" Grouped="false" Sorted="false" IsSortable="true" Visible="true" SortOrder="Ascending">
+            <Name>Name</Name>
+            <Id>MonitoringObjectDisplayName</Id>
+          </ColumnInfo>
+          <ColumnInfo Index="4" SortIndex="-1" Width="100" Grouped="false" Sorted="false" IsSortable="true" Visible="false" SortOrder="Ascending">
+            <Name>User</Name>
+            <Id>User</Id>
+          </ColumnInfo>
+          <ColumnInfo Index="5" SortIndex="-1" Width="100" Grouped="false" Sorted="false" IsSortable="true" Visible="true" SortOrder="Ascending">
+            <Name>Event Number</Name>
+            <Id>Number</Id>
+          </ColumnInfo>
+          <ColumnInfo Index="6" SortIndex="-1" Width="100" Grouped="false" Sorted="false" IsSortable="true" Visible="false" SortOrder="Ascending">
+            <Name>Log Name</Name>
+            <Id>Channel</Id>
+          </ColumnInfo>
+          <ColumnInfo Index="7" SortIndex="-1" Width="100" Grouped="false" Sorted="false" IsSortable="true" Visible="false" SortOrder="Ascending">
+            <Name>Logging Computer</Name>
+            <Id>LoggingComputer</Id>
+          </ColumnInfo>
+          <ColumnInfo Index="8" SortIndex="-1" Width="100" Grouped="false" Sorted="false" IsSortable="true" Visible="false" SortOrder="Ascending">
+            <Name>Rule Name</Name>
+            <Id>MonitoringRuleDisplayName</Id>
+          </ColumnInfo>
+        </Presentation>
+        <Target />
+      </View>
+      <View ID="JPPacks.MonitorSyslogs.Views.SyslogReceiversState" Accessibility="Internal" Enabled="true" Target="JPPacks.MonitorSyslogs.SyslogReceiver" TypeID="SC!Microsoft.SystemCenter.StateViewType" Visible="true">
+        <Category>AvailabilityHealth</Category>
+        <Criteria />
+      </View>
+    </Views>
+    <Folders>
+      <Folder ID="JPPacks.MonitorSyslogs.Views.JPPacksViews" Accessibility="Internal" ParentFolder="SC!Microsoft.SystemCenter.Monitoring.ViewFolder.Root" />
+    </Folders>
+    <FolderItems>
+      <FolderItem ElementID="JPPacks.MonitorSyslogs.Views.SyslogEvents" Folder="JPPacks.MonitorSyslogs.Views.JPPacksViews" />
+      <FolderItem ElementID="JPPacks.MonitorSyslogs.Views.SyslogReceiversState" Folder="JPPacks.MonitorSyslogs.Views.JPPacksViews" />
+    </FolderItems>
+  </Presentation>
+  <Reporting>
+    <LinkedReports>
+      <LinkedReport ID="JPPacks.MonitorSyslogs.Reports.AllSyslogData" Accessibility="Internal" Base="MicrosoftSystemCenterDataWarehouseReportLibrary!Microsoft.SystemCenter.DataWarehouse.Report.EventTemplate" Visible="true" Target="JPPacks.MonitorSyslogs.SyslogReceiver">
+        <ParameterBlock columns="7" xmlns="http://schemas.microsoft.com/mom/reporting/2007/ReportParameterSettings">
+          <Controls>
+            <Control rowSpan="4" columnSpan="3" type="Microsoft.SystemCenter.DataWarehouse.Report.ParameterControl.MonitoringObjectXmlPicker">
+              <ReportParameters>
+                <ReportParameter name="ObjectList">
+                  <Prompt>Microsoft.SystemCenter.DataWarehouse.Report.Library!Microsoft.SystemCenter.DataWarehouse.Report.ParameterPrompt.ObjectList</Prompt>
+                </ReportParameter>
+                <ReportParameter name="ManagementGroupId" binding="GroupList" />
+              </ReportParameters>
+              <Properties>
+                <Property name="ContextObjectBinding">
+                  <Value>Containment</Value>
+                </Property>
+                <Property name="TypeFilter">
+                  <Value>MyMP.MyComputerRole1</Value>
+                </Property>
+              </Properties>
+            </Control>
+          </Controls>
+        </ParameterBlock>
+        <Parameters>
+          <Parameter Name="StartDate_BaseType">
+            <Value>Sunday</Value>
+          </Parameter>
+          <Parameter Name="StartDate_BaseValue">
+            <Value>01/01/2010 12:00:00 AM</Value>
+          </Parameter>
+          <Parameter Name="StartDate_OffsetType">
+            <Value>None</Value>
+          </Parameter>
+          <Parameter Name="StartDate_OffsetValue">
+            <Value>0</Value>
+          </Parameter>
+          <Parameter Name="EndDate_BaseType">
+            <Value>Today</Value>
+          </Parameter>
+          <Parameter Name="EndDate_BaseValue">
+            <Value>01/01/2010 12:00:00 AM</Value>
+          </Parameter>
+          <Parameter Name="EndDate_OffsetType">
+            <Value>None</Value>
+          </Parameter>
+          <Parameter Name="EndDate_OffsetValue">
+            <Value>0</Value>
+          </Parameter>
+          <Parameter Name="Columns">
+            <Value><![CDATA[<Data>
+   <Columns>
+      <Column Visible="True">
+         <ID>EventDisplayNumber</ID>
+      </Column>
+      <Column Visible="False">
+         <ID>EventLevelTitle</ID>
+         <Filter Type="Equals">Error</Filter>
+      </Column>
+      <Column Visible="True">
+         <ID>EventChannelTitle</ID>
+      </Column>
+      <Column Visible="True">
+         <ID>EventPublisherName</ID>
+         <Filter Type="Contains">Health Service</Filter>
+      </Column>
+      <Column Visible="True">
+         <ID>ManagedEntityDefaultName</ID>
+      </Column>
+      <Column Visible="True">
+         <ID>ComputerName</ID>
+      </Column>
+      <Column Visible="True">
+         <ID>Parameter1</ID>
+      </Column>
+   </Columns>
+</Data>]]></Value>
+          </Parameter>
+        </Parameters>
+      </LinkedReport>
+    </LinkedReports>
+  </Reporting>
+  <LanguagePacks>
+    <LanguagePack ID="ENU" IsDefault="true">
+      <DisplayStrings>
+        <DisplayString ElementID="JPPacks.MonitorSyslogs">
+          <Name>JPPacks - Monitor Syslogs</Name>
+          <Description>This management pack contains a custom datasource which processes Syslog events with a PowerShell script, and maps parsed properties to generic OpsMgr events. It also contains a custom rule to collect and publish these events, and a view to look at them.</Description>
+        </DisplayString>
+        <DisplayString ElementID="JPPacks.MonitorSyslogs.CollectSyslogs">
+          <Name>JPPacks – Collect Syslogs</Name>
+          <Description>This rule collects processed syslog events from the JPPacks custom datasource and publishes them.</Description>
+        </DisplayString>
+        <DisplayString ElementID="JPPacks.MonitorSyslogs.CustomSyslogDS">
+          <Name>JPPacks - Custom Syslog DS</Name>
+          <Description>This data source recieves a DataItem from the built-in Syslog data source module, processes it with a powershell script using a probe action module, then maps custom parameters from a PowerShell Property Bag to a new Event's EventData using the Generic Event Mapper condition detection module.</Description>
+        </DisplayString>
+        <DisplayString ElementID="JPPacks.MonitorSyslogs.DiscoverSyslogReceivers">
+          <Name>JPPacks - Discover Syslog Receivers</Name>
+          <Description>This discovery looks for the following registry DWORD value: "HKLM\SOFTWARE\JPPacks\SyslogEnabled"=1. If the value is present and equals "1", this discovery rule creates an instance of the Syslog Receiver class referenced to the computer with the registry key present.</Description>
+        </DisplayString>
+        <DisplayString ElementID="JPPacks.MonitorSyslogs.Monitors.AvailabilityState.HealthService">
+          <Name>JPPacks Monitors - Health Service</Name>
+          <Description>This monitor watches the health service on Syslog Receivers and reports its status.</Description>
+        </DisplayString>
+        <DisplayString ElementID="JPPacks.MonitorSyslogs.Reports.AllSyslogData">
+          <Name>Syslog - All Events</Name>
+          <Description>This report shows all syslog events.</Description>
+        </DisplayString>
+        <DisplayString ElementID="JPPacks.MonitorSyslogs.SyslogReceiver">
+          <Name>Syslog Receiver</Name>
+          <Description>Computer that is recieving syslog data.</Description>
+        </DisplayString>
+        <DisplayString ElementID="JPPacks.MonitorSyslogs.Views.JPPacksViews">
+          <Name>JPPacks Views</Name>
+          <Description>This folder contains all views related to the JPPacks Management Pack.</Description>
+        </DisplayString>
+        <DisplayString ElementID="JPPacks.MonitorSyslogs.Views.SyslogEvents">
+          <Name>JPPacks - Syslog Events</Name>
+          <Description>This view shows all syslog events received by instances of the 'Syslog Receiver' class.</Description>
+        </DisplayString>
+        <DisplayString ElementID="JPPacks.MonitorSyslogs.Views.SyslogReceiversState">
+          <Name>JPPacks - Syslog Receivers State</Name>
+          <Description>This view shows the names and states of all discovered Syslog Receivers.</Description>
+        </DisplayString>
+      </DisplayStrings>
+    </LanguagePack>
+  </LanguagePacks>
+</ManagementPack>

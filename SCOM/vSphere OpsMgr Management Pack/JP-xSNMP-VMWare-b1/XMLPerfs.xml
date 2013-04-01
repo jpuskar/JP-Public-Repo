@@ -1,0 +1,15 @@
+<DataItem type="System.PropertyBagData" time="2011-03-08T17:18:09.1815221-05:00" sourceHealthServiceId="C8DBD204-BD8B-0C8A-E10A-D6922972BD6F">
+<Property Name="0" VariantType="8">"e70dc0d1-c457-37f4-89c4-e0b901f40e5a","ESX-SAN2-Lun0","disk.write.average from vm5.chemistry.ohio-state.edu","8"</Property>
+<Property Name="1" VariantType="8">"461e712a-4e64-62c5-c900-167ac461efda","ESX-SAN2-Lun4","disk.write.average from vm5.chemistry.ohio-state.edu","11"</Property>
+<Property Name="2" VariantType="8">"21e53d50-61e2-7171-48e6f4b756e3859f","ESXSAN1Lun0","disk.write.averagefromvm5.chemistry.ohiostate.edu","269"</Property>
+<Property Name="3" VariantType="8">"fff9c420-1701-b43b-04b0-c94a5b768108","ESX-SAN2-Lun1","disk.write.average from vm5.chemistry.ohio-state.edu","1876"</Property>
+<Property Name="4" VariantType="8">"492bc839-329a-753a-23e4-ba5ee6632445","ESX-SAN2-Lun3","disk.write.average from vm5.chemistry.ohio-state.edu","0"</Property>
+<Property Name="5" VariantType="8">"fbf6efd2-591e-710f-1af2-493247f18836","VDR-Backups","disk.write.average from vm5.chemistry.ohio-state.edu",""</Property>
+<Property Name="6" VariantType="8">"667ee61f-4b57-08b5-b180-8073963fbf07","ESX-SAN2-Lun2","disk.write.average from vm5.chemistry.ohio-state.edu","59"</Property>
+<Property Name="7" VariantType="8">"a08d7494-beff-860a-92ab-820a49d3bb9d","ESX-SAN1-Lun3","disk.write.average from vm5.chemistry.ohio-state.edu","63"</Property>
+<Property Name="8" VariantType="8">"9e828018-89c6-0543-33b9-dc8567bc1ead","ESX-SAN1-Lun1","disk.write.average from vm5.chemistry.ohio-state.edu","6"</Property>
+<Property Name="9" VariantType="8">"463da232-4708-5ac5-1ab9-aaadc6c1ed2a","ESX-SAN1-Lun2","disk.write.average from vm5.chemistry.ohio-state.edu","58"</Property>
+<Property Name="10" VariantType="8">"019fee7a-3383-5d71-0367-ffb18343eacf","ESX-SAN2-Lun5","disk.write.average from vm5.chemistry.ohio-state.edu",""</Property>
+<Property Name="11" VariantType="8">"37bbdbb0-801f-3be6-1c16-3ba589668927","ESX-SAN1-Lun4","disk.write.average from vm5.chemistry.ohiostate.edu","20"</Property>
+<Property Name="12" VariantType="8">"21b35c7c-771f-d979-cef2-87c6e37bfa67","ESX-SAN1-Lun5","disk.write.average from vm5.chemistry.ohio-state.edu",""</Property>
+</DataItem>

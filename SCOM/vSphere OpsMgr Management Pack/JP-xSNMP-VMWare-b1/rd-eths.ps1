@@ -1,0 +1,1 @@
+.\Discover-vCenterHostVMKs-20.ps1 -sourceID "{9CF1CD23-5768-B5D5-FEF2-31D406131B30}" -managedEntityID "{1EA864D9-4909-EAE3-73C3-CE6984488322}" -vCenterName vcenter.chemistry.ohio-state.edu -clusterName Infrastructure

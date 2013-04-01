@@ -1,0 +1,20 @@
+<DataItem type="System.Event.Data" time="2011-03-02T10:56:13.3232867-05:00" sourceHealthServiceId="DB6B810F-6070-1685-7E24-28420C26C6C8"><EventOriginId>{747C7D33-D22F-CCAE-CBFD-305BB7F6C4B4}</EventOriginId><PublisherId>{45D013FE-85D0-2633-1B22-29A9435184B3}</PublisherId><PublisherName>{45D013FE-85D0-2633-1B22-29A9435184B3}</PublisherName><EventSourceName>{45D013FE-85D0-2633-1B22-29A9435184B3}</EventSourceName><Channel>Syslog\10 - SecurityAuth10</Channel><LoggingComputer>vm2.chemistry.ohio-state.edu</LoggingComputer><EventNumber>10</EventNumber><EventCategory>0</EventCategory><EventLevel>1</EventLevel><UserName></UserName><RawDescription>Mar  2 15:56:13 Hostd: pam_env(system-auth-generic:setcred): Unable to open config file: /etc/security/pam_env.conf: No such file or directory</RawDescription><CollectDescription Type="Boolean">true</CollectDescription>
+
+
+
+<EventData>
+	<DataItem type="System.PropertyBagData" time="2011-03-02T10:56:13.3232867-05:00" sourceHealthServiceId="DB6B810F-6070-1685-7E24-28420C26C6C8">
+		<Property Name="Severity" VariantType="8">3</Property>
+		<Property Name="SeverityName" VariantType="8">Error</Property>
+		<Property Name="opsmgr_EventLevel" VariantType="8">1</Property>
+		<Property Name="TimeStamp" VariantType="8">Mar  2 15:56:13</Property>
+		<Property Name="CustomMonitoredObjectGUID" VariantType="8">338c2b15-8772-7875-4e70-57c244fa4987</Property>
+		<Property Name="opsmgr_OriginalXMLEvent" VariantType="8">&lt;Facility&gt;10&lt;/Facility&gt;&lt;Severity&gt;3&lt;/Severity&gt;&lt;Facility&gt;10&lt;/Facility&gt;&lt;Priority&gt;83&lt;/Priority&gt;&lt;PriorityName&gt;authpriv.error&lt;/PriorityName&gt;&lt;TimeStamp&gt;Mar  2 15:56:13&lt;/TimeStamp&gt;&lt;HostName&gt;128.146.235.229&lt;/HostName&gt;&lt;Message&gt;Mar  2 15:56:13 Hostd: pam_env(system-auth-generic:setcred): Unable to open config file: /etc/security/pam_env.conf: No such file or directory&lt;/Message&gt;</Property>
+		<Property Name="HostName" VariantType="8">VM2.chemistry.ohio-state.edu</Property>
+		<Property Name="Priority" VariantType="8">83</Property>
+		<Property Name="opsmgr_LoggingComputer" VariantType="8">vm2.chemistry.ohio-state.edu</Property>
+		<Property Name="opsmgr_Channel" VariantType="8">Syslog\10 - SecurityAuth10</Property>
+		<Property Name="opsmgr_EventNumber" VariantType="8">10</Property>
+		<Property Name="FacilityName" VariantType="8">SecurityAuth10</Property>
+		<Property Name="IPAddress" VariantType="8">128.146.235.229</Property>
+		<Property Name="Message" VariantType="8">Mar  2 15:56:13 Hostd: pam_env(system-auth-generic:setcred): Unable to open config file: /etc/security/pam_env.conf: No such file or directory</Property><Property Name="PriorityName" VariantType="8">authpriv.error</Property><Property Name="Facility" VariantType="8">10</Property></DataItem></EventData><EventDisplayNumber>10</EventDisplayNumber><EventDescription>Mar  2 15:56:13 Hostd: pam_env(system-auth-generic:setcred): Unable to open config file: /etc/security/pam_env.conf: No such file or directory</EventDescription></DataItem>

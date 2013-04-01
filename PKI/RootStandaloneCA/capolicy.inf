@@ -1,0 +1,27 @@
+[Version]
+Signature= "$Windows NT$"
+
+[PolicyStatementExtension]
+Policies = LegalPolicy
+Critical = 0
+
+[AuthorityInformationAccess]
+Empty = true
+
+[CRLDistributionPoint]
+Empty = true
+
+[basicconstraintsextension]
+pathlength = 1
+critical=true
+ 
+[certsrv_server]
+renewalkeylength=4096
+RenewalValidityPeriodUnits=20
+RenewalValidityPeriod=years
+CRLPeriodUnits = 1
+CRLPeriod = years
+CRLDeltaPeriodUnits = 0
+CRLDeltaPeriod = hours
+LoadDefaultTemplates=0
+

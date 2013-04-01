@@ -1,0 +1,118 @@
+<ManagementPack ContentReadable="true" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <Manifest>
+    <Identity>
+      <ID>xSNMP.VMWareESXi</ID>
+      <Version>1.0.0.5</Version>
+    </Identity>
+    <Name>xSNMP.VMWareESXi</Name>
+    <References>
+      <Reference Alias="MicrosoftSystemCenterDataWarehouseLibrary">
+        <ID>Microsoft.SystemCenter.DataWarehouse.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="SC">
+        <ID>Microsoft.SystemCenter.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="MicrosoftSystemCenterNetworkDeviceLibrary">
+        <ID>Microsoft.SystemCenter.NetworkDevice.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="Windows">
+        <ID>Microsoft.Windows.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="Health">
+        <ID>System.Health.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="System">
+        <ID>System.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="SystemSnmpLibrary">
+        <ID>System.Snmp.Library</ID>
+        <Version>6.1.7221.0</Version>
+        <PublicKeyToken>31bf3856ad364e35</PublicKeyToken>
+      </Reference>
+      <Reference Alias="xSNMP">
+        <ID>xSNMP</ID>
+        <Version>1.1.1.19</Version>
+        <PublicKeyToken>36c61ffc7d4f558a</PublicKeyToken>
+      </Reference>
+    </References>
+  </Manifest>
+  <TypeDefinitions>
+    <EntityTypes>
+      <ClassTypes>
+        <ClassType ID="xSNMP.VMWareESXi.ESXiHost" Accessibility="Internal" Abstract="false" Base="xSNMP!xSNMP.Device" Hosted="false" Singleton="false" />
+      </ClassTypes>
+    </EntityTypes>
+  </TypeDefinitions>
+  <Monitoring>
+    <Discoveries>
+      <Discovery ID="xSNMP.VMWareESXi.DiscoverESXiHosts" Enabled="true" Target="xSNMP!xSNMP.Device" ConfirmDelivery="true" Remotable="true" Priority="Normal">
+        <Category>Discovery</Category>
+        <DiscoveryTypes>
+          <DiscoveryClass TypeID="xSNMP.VMWareESXi.ESXiHost" />
+        </DiscoveryTypes>
+        <DataSource ID="DiscoverVMWare" TypeID="xSNMP!xSNMP.DataSource.DiscoverDerivedDevice">
+          <Interval>45</Interval>
+          <Expression>
+            <RegExExpression>
+              <ValueExpression>
+                <Value>$Target/Property[Type="MicrosoftSystemCenterNetworkDeviceLibrary!Microsoft.SystemCenter.NetworkDevice"]/SystemOID$</Value>
+              </ValueExpression>
+              <Operator>ContainsSubstring</Operator>
+              <Pattern>1.3.6.1.4.1.6876.4.1</Pattern>
+            </RegExExpression>
+          </Expression>
+          <ClassID>$MPElement[Name="xSNMP.VMWareESXi.ESXiHost"]$</ClassID>
+          <InstanceSettings>
+            <Settings>
+              <Setting>
+                <Name>$MPElement[Name="System!System.Entity"]/DisplayName$</Name>
+                <Value>$Target/Property[Type="MicrosoftSystemCenterNetworkDeviceLibrary!Microsoft.SystemCenter.NetworkDevice"]/Name$</Value>
+              </Setting>
+              <Setting>
+                <Name>$MPElement[Name="MicrosoftSystemCenterNetworkDeviceLibrary!Microsoft.SystemCenter.NetworkDevice"]/IPAddress$</Name>
+                <Value>$Target/Property[Type="MicrosoftSystemCenterNetworkDeviceLibrary!Microsoft.SystemCenter.NetworkDevice"]/IPAddress$</Value>
+              </Setting>
+            </Settings>
+          </InstanceSettings>
+        </DataSource>
+      </Discovery>
+    </Discoveries>
+  </Monitoring>
+  <Presentation>
+    <Folders>
+      <Folder ID="xSNMP.VMWareESXi.Views.xSNMP.VMWare" Accessibility="Internal" ParentFolder="xSNMP!xSNMP.Folder.Root" />
+    </Folders>
+  </Presentation>
+  <LanguagePacks>
+    <LanguagePack ID="ENU" IsDefault="true">
+      <DisplayStrings>
+        <DisplayString ElementID="xSNMP.VMWareESXi">
+          <Name>xSNMP for VMWare</Name>
+        </DisplayString>
+        <DisplayString ElementID="xSNMP.VMWareESXi.DiscoverESXiHosts">
+          <Name>Discover ESXi Hosts</Name>
+          <Description>This discovery looks for ESXi hosts by looking for a SystemOID value in the collection of xSNMP.Device's of 1.3.6.1.4.1.6876.4.1.
+Technically this will discover any VMWare products. What I need to discover for is value of OID ".1.3.6.1.4.1.6876.1.1.0" Equals "VMware ESXi"</Description>
+        </DisplayString>
+        <DisplayString ElementID="xSNMP.VMWareESXi.ESXiHost">
+          <Name>VMWare ESXi Host</Name>
+        </DisplayString>
+        <DisplayString ElementID="xSNMP.VMWareESXi.Views.xSNMP.VMWare">
+          <Name>VMWare Views</Name>
+        </DisplayString>
+      </DisplayStrings>
+    </LanguagePack>
+  </LanguagePacks>
+</ManagementPack>

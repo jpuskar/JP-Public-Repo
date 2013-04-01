@@ -1,0 +1,28 @@
+<DataItem type="System.Event.Data" time="2011-03-01T20:25:49.5885108-05:00" sourceHealthServiceId="DB6B810F-6070-1685-7E24-28420C26C6C8">
+	<EventOriginId>{747C7D33-D22F-CCAE-CBFD-305BB7F6C4B4}</EventOriginId>
+	<PublisherId>{45D013FE-85D0-2633-1B22-29A9435184B3}</PublisherId>
+	<PublisherName>SysLog</PublisherName>
+	<EventSourceName>SysLog</EventSourceName
+	><Channel>SysLog</Channel>
+	<LoggingComputer></LoggingComputer>
+	<EventNumber>0</EventNumber>
+	<EventCategory>3</EventCategory>
+	<EventLevel>0</EventLevel>
+	<UserName></UserName>
+	<RawDescription></RawDescription>
+	<CollectDescription Type="Boolean">true</CollectDescription>
+	<EventData>
+		<DataItem type="System.ApplicationLog.SysLogData" time="2011-03-01T20:25:49.5885108-05:00" sourceHealthServiceId="DB6B810F-6070-1685-7E24-28420C26C6C8">
+			<Facility>10</Facility>
+			<Severity>3</Severity>
+			<Facility>10</Facility>
+			<Priority>83</Priority>
+			<PriorityName>authpriv.error</PriorityName>
+			<TimeStamp>Mar  2 01:25:49</TimeStamp>
+			<HostName>128.146.235.229</HostName>
+			<Message>Mar  2 01:25:49 Hostd: pam_env(system-auth-generic:setcred): Unable to open config file: /etc/security/pam_env.conf: No such file or directory</Message>
+		</DataItem>
+	</EventData>
+	<EventDisplayNumber>0</EventDisplayNumber>
+	<EventDescription></EventDescription>
+</DataItem>

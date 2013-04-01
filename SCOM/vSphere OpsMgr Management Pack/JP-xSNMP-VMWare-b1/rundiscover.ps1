@@ -1,0 +1,1 @@
+.\Discover-vCenterClusters.ps1 -sourceID "{D43A02C4-9D35-ABAD-F807-97ACA5D4629C}" -managedEntityID "{0130A139-0E8E-384D-B169-55EDEE094C2E}" -vCenterName "vcenter" -dcName "Chemistry Datacenter" -dcUID "/VIServer=@vcenter.chemistry.ohio-state.edu:443/Datacenter=Datacenter-datacenter-2/"
