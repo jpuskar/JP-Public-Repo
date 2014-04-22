@@ -35,7 +35,7 @@ $regStrings | % {
 			$subKeyPath = $null
 			[string]$subKeyPath = $rootKeyPath.TrimEnd("\") + "\" + $_
 			$subkey = $null
-			$subkey = $regProv.EnumValues($hklm, $subKeyPath)
+			$subkey = $regProv.EnumValues($HKEY_LOCAL_MACHINE, $subKeyPath)
 			
 			$subKeyVals = $null
 			$subKeyVals = $subKey.sNames
