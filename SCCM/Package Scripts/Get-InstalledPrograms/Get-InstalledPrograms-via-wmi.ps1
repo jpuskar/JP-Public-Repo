@@ -16,7 +16,7 @@ $HKEY_LOCAL_MACHINE = 2147483650
 #$HKEY_CURRENT_CONFIG = 2147483653
 
 $regProv = $null
-$regProv = $b = [wmiclass]"root\default:StdRegProv"
+$regProv = [wmiclass]"root\default:StdRegProv"
 
 $progs = $null
 $progs = @()
@@ -33,7 +33,7 @@ $regStrings | % {
 		
 		$subKeyList | % {
 			$subKeyPath = $null
-			$subKeyPath = $rootKeyPath.TrimEnd("\") + "\" + $_
+			[string]$subKeyPath = $rootKeyPath.TrimEnd("\") + "\" + $_
 			$subkey = $null
 			$subkey = $regProv.EnumValues($hklm, $subKeyPath)
 			
