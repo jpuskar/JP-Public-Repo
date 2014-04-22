@@ -43,7 +43,7 @@ $regStrings | % {
 			If($subKeyVals -like "*DisplayName*") {
 			
 				$displayNameObj = $null
-				$displayNameObj = $regProv.GetStringValue($hklm, $subKeyPath, "DisplayName")
+				$displayNameObj = $regProv.GetStringValue($HKEY_LOCAL_MACHINE, $subKeyPath, "DisplayName")
 				
 				
 				$displayNameVal = $null
@@ -52,21 +52,21 @@ $regStrings | % {
 				If($displayNameVal -ne $null -and $displayNameVal -ne "") {
 					#get UninstallString
 					$uninstallString = $null
-					$uninstallString = $regProv.GetStringValue($hklm, $subKeyPath, "UninstallString")
+					$uninstallString = $regProv.GetStringValue($HKEY_LOCAL_MACHINE, $subKeyPath, "UninstallString")
 					$uninstallStringVal = $null
 					If($uninstallString -ne $null -and $uninstallString -ne "")
 						{$uninstallStringVal = $uninstallString.sValue}
 					
 					#get QuietUninstallString
 					$quietUninstallString = $null
-					$quietUninstallString = $regProv.GetStringValue($hklm, $subKeyPath, "QuietUninstallString")
+					$quietUninstallString = $regProv.GetStringValue($HKEY_LOCAL_MACHINE, $subKeyPath, "QuietUninstallString")
 					$quietUninstallStringVal = $null
 					If($quietUninstallString -ne $null -and $quietUninstallString -ne "")
 						{$quietUninstallStringVal = $quietUninstallString.sValue}
 					
 					#get DisplayVersion
 					$displayVersion = $null
-					$displayVersion = $regProv.GetStringValue($hklm, $subKeyPath, "DisplayVersion")
+					$displayVersion = $regProv.GetStringValue($HKEY_LOCAL_MACHINE, $subKeyPath, "DisplayVersion")
 					$displayVersionVal = $null
 					If($displayVersion -ne $null -and $displayVersion -ne "")
 						{$displayVersionVal = $displayVersion.sValue}
