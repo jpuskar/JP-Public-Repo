@@ -1,0 +1,106 @@
+##Written by John Puskar
+##johnpuskar@gmail.com
+##re-use freely, but please keep my name above.
+
+##how-to
+
+#1. Make edits under 'Function Generate-File'
+## the $i variable corresponds to the 'fVarIncrement' variable below.
+
+$seedName = "test"
+
+$fVarMin = -180
+$fVarMax = 180
+$fVarIncrement = 5
+
+
+
+Function Execute-NecrefJobFile($filename) {
+	$batchTmpName = "batchtemp.in"
+	$batchInFileContents = "1`n" + $filename + "`n4" 
+	$batchInFileContents | out-file $batchTmpName -encoding "ASCII"
+	
+	$batchContent = "necref35.exe < " + $batchTmpName
+	$batchContent | out-file ".\runCurrentJob.bat" -encoding "ASCII"
+	
+	#$command = "necref35 < " + $batchInFile
+	$command = "cmd /c .\runcurrentjob.bat"
+	
+	Invoke-Expression $command
+}
+
+Function Generate-File($i) {
+	$GeneratedFile = $null
+	$GeneratedFile = "CM:          ***** NFGTD.DAT *****
+	CM:      NEAR-FIELD WITH CONSTANT Z-CUT at aperture plane.Reflector Dia is 12 inches
+	CM:      Focal Length is 4.8 inches, so F/D=0.4
+	CE:            LGTD = TRUE ONLY
+	DG:
+	1
+	3  4.8  0.1  0.1  12.0  0
+	TO:
+	T   60  1
+	F   0   0   0   0
+	F   F   F   F   0
+	T   T   F   0.8
+	F   F   F   T   T   T   0.0  0.0
+	T   T   0.0  0.0
+	FD:
+	0   T
+	F   0   T   1   90.0  0.0  T  T
+	2   0.0   90.0
+	0   0.0   0.0   180.0   0  0.0   0.0   180.0
+	F   180.0  180.0  180.0  180.0
+	TT:
+	F  0.0
+	F
+	0.04
+	F  F
+	F
+	F  F
+	F  0
+	FQ:
+	1   10.0
+	NF:
+	0.0   0.0   0.0
+	T
+	T"
+	
+	$generatedFile += "`n`t" + $i + ".0"
+	
+	$generatedFile += "
+	PZ:
+	-1
+	6.0
+	-180   180   2
+	F
+	PP:
+	1
+	1  1
+	2  1
+	XQ:"
+	
+	return $generatedFile
+}
+
+$i = $null
+$i = 0
+$curfVar = $null
+$curfVar = $fVarMin
+$arrFileList = $null
+$arrFileList = @()
+While($curfVar -le $fVarMax) {
+	$filename = $null
+	$filename = $seedName + "-" + $i + ".dat"
+	$contents = Generate-File $curfVar
+	$contents | out-file $filename -encoding "ASCII"
+	$arrFileList += $filename
+	$curFVar += $fVarIncrement
+	write-host -f green "currentFVar: $curFVar"
+	write-host -f green "maxFVar: $fVarMax"
+	$i++
+}
+
+$arrFileList | % {
+	Execute-NecrefJobFile $_
+}

@@ -1,0 +1,129 @@
+Import-Module ShowUi
+
+#build 83
+#johnpuskar@gmail.com
+
+$submitButtonSettings = @{"Column"="0";"Row"=0;"Margin"=4}
+
+[string]$global:srcID = $args[0]
+If($global:srcID -ne $null -and $global:srcID -ne "")
+{$global:srcID = $global:srcID.ToUpper()}
+#Write-Host -f green """$srcID"""
+
+#figure out the work item class
+$wiClassStr = $null
+$global:srcClass = "Unknown Type"
+$global:tgtClass = "Unknown Type"
+If($srcID -match "^SR[0-9]+$") {
+	$wiClassStr = "System.WorkItem.ServiceRequest$"
+	$global:srcClass = "Service Request"
+	$global:tgtClass = "Incident Request"
+}
+ElseIf($srcID -match "^IR[0-9]+$") {
+	$wiClassStr = "System.WorkItem.Incident$"
+	$global:srcClass = "Incident Request"
+	$global:tgtClass = "Service Request"
+}
+Else {}
+
+#try to grab an instance of the class based on ID
+If($wiClassStr -ne $null -and $wiClassStr -ne "") {
+	$wiClass = Get-SCSMClass -Name $wiClassStr
+	$wiFilter = "ID = " + $srcID
+	$oWorkItem = $null
+	$oWorkItem = Get-SCSMObject -Class $wiClass -filter $wiFilter
+	$global:bWorkItemExists = $false
+	If($oWorkItem -eq $null -or $oWorkItem -eq "") {
+		$global:sWorkItemTitle = "Work item does not seem to exist."
+		$global:sWorkItemDescription = $null
+		$global:bWorkItemExists = $false
+	}
+	Else {
+		$global:bWorkItemExists = $true
+		$global:sWorkItemTitle = $oWorkItem.Title
+		$global:sWorkItemDescription = $oWorkItem.Description
+	}
+}
+
+	$inputWindow = New-Grid -ControlName "Work Item Conversion" -columns 1 -Rows Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto {
+		New-Label "Work Item Conversion Summary" -Row 0 -Column 0 -HorizontalContentAlignment "Center" -FontWeight "Bold"
+		StackPanel -Row 1 -Column 0 -ControlName "WISummary" -MinWidth 300 {
+			New-Label "Source Work Item ID: "
+			TextBox -Name "SourceID" -Margin 4 -IsReadOnly
+			New-Label "Source Work Item Class"
+			TextBox -Name "SourceClass" -Margin 4 -IsReadOnly
+			New-Label "New Work Item Class"
+			TextBox -Name "NewClass" -Margin 4 -IsReadOnly
+			New-Label "Title"
+			TextBox -Name "SourceTitle" -Margin 4 -IsReadOnly
+			New-Label "Description"
+			TextBox -Name "SourceDescr" -Margin 4 -IsReadOnly -Minlines 5 -Textwrapping "Wrap" -MaxHeight 200 -Maxwidth 600 -VerticalScrollBarVisibility "Visible"
+		} -On_Loaded {
+			$SourceID.Text = $global:srcID
+			$sourceClass.Text = $global:srcClass
+			$newclass.Text = $global:tgtClass
+			$sourceTitle.Text = $global:sWorkItemTitle
+			$sourceDescr.Text = $global:sWorkItemDescription
+		}
+		New-Label "Please type 'yes' in the box below to confirm." -Row 2 -Column 0
+		TextBox -Name "ConfirmYes" -Row 3 -Column 0 -Margin 4 -CharacterCasing "Lower" -On_TextChanged {
+			If($confirmyes.text -eq "yes") {
+				$submitbutton.IsEnabled = $true
+			}
+			Else {
+				$submitbutton.isenabled = $false
+			}
+		}
+		Button "Submit" -Row 4 -Column 0 -Margin 4 -MinHeight 40 -Name "submitbutton" -On_Loaded {$this.IsEnabled = $False} -On_Click {
+			$submitbutton.IsEnabled = $false
+			$RunbookProgress.Value = 100
+			$ProgressLabel.Content = "Runbook launch attempted..."
+			$cancelbutton.content = "Close"
+			
+			$runbookJob = {
+				$sourceID = $args[0]
+				$xmlFile = $null
+				If($sourceID -like "SR*") {
+					$xmlFile = "Process-SR_to_IR-Conversion.xml"
+					$sCmdArg2 = "/SourceSR=" + $sourceID
+				}
+				ElseIf($sourceID -like "IR*") {
+					$xmlFile = "Process-IR_to_SR-Conversion.xml"
+					$sCmdArg2 = "/SourceIR=" + $sourceID
+				}
+				Else{
+					#something's very broken if we get here
+				}
+				
+				$sCmd = "\\scorch1.osuesl.net\runbookcli\ORTRunbookLauncherCLI.exe"
+				$sCmdArg1 = "/ORTXML=\\scorch1.osuesl.net\runbookcli\" + $xmlFile
+				$fullCmd = $sCmd + " " + $sCmdArg1 + " " + $sCmdArg2
+				#$msg = "Running command: " + $fullCmd
+				#Write-host -f green $msg
+				& $sCmd $sCmdArg1 $sCmdArg2
+			}
+			
+			Start-Job -scriptblock $runbookjob -ArgumentList $global:srcID
+			StackPanel -controlname "Runbook start attempt has been submitted." {
+				New-Textblock -MaxWidth 300 -Margin 4 -TextWrapping "Wrap" "An attempt has been made to start the conversion runbook. Check the orchestrator event log for progress. It will likely take 3 minutes to fully complete."
+				New-Button "OK" -MinHeight 40 -Margin 4 -On_Click {
+					$parent | close-control
+				}
+			} -Show
+		}
+		Button "Cancel" -Row 5 -Column 0 -Margin 4 -name "cancelbutton" -On_Click {$Parent | Close-Control}
+		ProgressBar -Row 6 -Column 0 -Name RunbookProgress -Maximum 100 -Height 40 -Margin 4
+		New-Label -Name "ProgressLabel" -HorizontalContentAlignment "center" -VerticalContentAlignment "center" -Row 6 -Column 0 -Background "Transparent" -Margin 4
+	} -On_Loaded {
+		If($global:srcClass -ne "Service Request" -and $global:srcClass -ne "Incident Request") {
+			$submitButton.IsEnabled = $false
+			$confirmYes.IsReadOnly = $true
+			$confirmYes.Text = "Unknown source type; cannot proceed."
+		}
+		
+		If($global:bWorkItemExists -eq $false) {
+			$submitButton.IsEnabled = $false
+			$confirmYes.IsReadOnly = $true
+			$confirmYes.Text = "Source work item does not exist; cannot proceed."
+		}
+	} -Show

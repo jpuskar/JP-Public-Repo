@@ -1,0 +1,48 @@
+Function Email-User($DN,$migrDate)
+	{
+		$objUserEmailAddress = $objUser.properties.mail
+			Write-Host -f yellow "`t** Emailing $objUsersAMAccountName at $objUserEmailAddress"
+			
+			$msgSubject = ""
+			$msgBody = ""
+			
+			$msg = new-object Net.Mail.MailMessage
+			$msg.Bcc.Add("puskar.4@osu.edu")
+			$msg.From = "puskar.4@osu.edu"
+			#$msg.To.Add($objUserEmailAddress)
+			$msg.To.Add("puskar.4@osu.edu")
+			$msg.Subject = $msgSubject
+			$msg.Body = $msgBody
+			$msg.Sender = "puskar.4@osu.edu"
+			
+			#REF http://nicholasarmstrong.com/2009/12/sending-email-with-powershell-implicit-and-explicit-ssl/
+			
+			$mailServer = "m.chemistry.ohio-state.edu"
+			$serverPort = 25
+			$timeout = 3000          # timeout in milliseconds
+			#$enableSSL = $true
+			#$implicitSSL = $true
+			#$credentials = [Net.NetworkCredential](Get-Credential)		
+			
+			$smtpClient = New-Object System.Net.Mail.SmtpClient
+			$smtpClient.Host = $mailServer
+			#$smtpClient.Port = $serverPort
+			$smtpClient.EnableSsl = $false
+			$smtpClient.Timeout = $timeout
+			
+			$Credentials = new-object System.Net.networkCredential
+			$Credentials.UserName = "puskar.4"
+			
+			$BasicString = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($script:emailCredentialsPassword)
+			$pw = $null
+			$pw = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BasicString)
+			$Credentials.Password = $pw
+			$credentials.Domain = "osu.edu"
+			$pw = $null
+			
+			$smtpClient.UseDefaultCredentials = $false
+			$smtpClient.Credentials = $credentials
+			#$smtpClient.Credentials = [system.Net.CredentialCache]::DefaultNetworkCredentials
+			
+			$smtpClient.Send($msg)
+	}
